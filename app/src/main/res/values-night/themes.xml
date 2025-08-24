@@ -1,0 +1,14 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Learnify" parent="Theme.Material3.DayNight.NoActionBar">
+        parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- هنا نغير لون البار اللي فوق -->
+        <item name="colorPrimary">#FFF</item>
+        <!-- اللون الغامق بتاع الـ status bar -->
+        <item name="colorPrimaryDark">#FFF</item>
+        <!-- لون الـ navbar (اللي تحت) -->
+        <item name="android:navigationBarColor">#FFF</item>
+        <!-- لون الخلفية العامة -->
+        <item name="android:windowBackground">#FFFFFF</item>
+    </style>
+</resources>

@@ -1,0 +1,15 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- الخلفية الأساسية -->
+    <solid android:color="@android:color/white"/>
+
+    <!-- خط أسود من فوق -->
+    <stroke
+        android:width="0.5dp"
+        android:color="#ADE36E96"/>
+
+    <!-- نخلي البوردر يظهر بس من فوق -->
+    <padding
+        android:bottom="1dp"/>
+</shape>

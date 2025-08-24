@@ -1,0 +1,36 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="100dp"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center">
+
+    <FrameLayout
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:background="@drawable/bg_chip"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:gravity="center"
+
+        >
+
+        <ImageView
+            android:id="@+id/ivIcon"
+            android:layout_width="29dp"
+            android:layout_height="28dp"
+            android:contentDescription="@string/app_name"
+            android:tint="@color/black"
+            tools:ignore="UseAppTint"
+            android:layout_gravity="center"
+            />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Programming"
+        android:textColor="@color/black"
+        android:textSize="12sp"
+        android:layout_marginTop="6dp"/>
+</LinearLayout>

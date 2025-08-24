@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- اللون لما يكون العنصر متحدد -->
+    <item android:color="#9D0A3B" android:state_checked="true"/>
+    <!-- اللون الافتراضي -->
+    <item android:color="@color/black"/>
+</selector>
