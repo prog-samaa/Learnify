@@ -7,7 +7,7 @@ import kotlinx.coroutines.withContext
 
 class CourseRepository {
 
-    private val apiKey = "AIzaSyD_Nntb2yllML53TAqll67lTzZaJNKFe3w"
+    private val apiKey = "Your API Key"
 
     suspend fun searchCourses(query: String): YouTubePlaylistResponse {
         return withContext(Dispatchers.IO) {
