@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "657252328985",
+    "project_id": "courseapp2-7d247",
+    "storage_bucket": "courseapp2-7d247.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:657252328985:android:509ab2da95447dced92c88",
+        "android_client_info": {
+          "package_name": "com.example.courseapp2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCg0nc6dklYO4D3vsWAh4ZlqHLZY1d-ADs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:657252328985:android:1c05918194156525d92c88",
+        "android_client_info": {
+          "package_name": "com.example.learnify"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCg0nc6dklYO4D3vsWAh4ZlqHLZY1d-ADs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
