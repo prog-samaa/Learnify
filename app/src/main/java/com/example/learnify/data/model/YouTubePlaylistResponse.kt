@@ -3,7 +3,7 @@ package com.example.learnify.data.model
 import com.squareup.moshi.Json
 
 data class YouTubePlaylistResponse(
-    @Json(name = "items") val items: List<Course>
+    @Json(name = "items") val items: List<PlaylistItem>
 )
 
 data class ThumbnailDetail(
@@ -27,9 +27,9 @@ data class PlaylistId(
     @Json(name = "playlistId") val playlistId: String
 )
 
-data class Course(
+data class PlaylistItem(
     @Json(name = "snippet") val details: PlaylistSnippet,
-    @Json(name = "id") val playlistId: PlaylistId,
+    @Json(name = "id") val id: PlaylistId,
     var rating: Float? = null
 )
 
