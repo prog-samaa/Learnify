@@ -2,7 +2,15 @@ package com.example.learnify.ui.components
 
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
@@ -39,7 +47,7 @@ fun TrendingCourseCard(course: Course) {
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             SubcomposeAsyncImage(
-                model = course.details.imageUrl.thumbnail.url,
+                model = course.thumbnailUrl,
                 contentDescription = "Course Image",
                 modifier = Modifier
                     .fillMaxSize()
@@ -76,14 +84,14 @@ fun TrendingCourseCard(course: Course) {
                     .padding(10.dp)
             ) {
                 Text(
-                    text = course.details.courseTitle,
+                    text = course.title,
                     fontSize = 12.sp,
                     color = Color.White,
                     maxLines = 1
                 )
 
                 Text(
-                    text = "By ${course.details.channelTitle}",
+                    text = "By ${course.channelTitle}",
                     fontSize = 10.sp,
                     color = Color.LightGray,
                     maxLines = 1
@@ -93,7 +101,7 @@ fun TrendingCourseCard(course: Course) {
 
                 Row {
                     val rating = course.rating ?: 4f
-                    Log.d("CourseRating", "Course ${course.details.courseTitle} -> $rating")
+                    Log.d("CourseRating", "Course ${course.title} -> $rating")
 
                     repeat(5) { index ->
                         val tint =

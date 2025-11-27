@@ -14,9 +14,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.learnify.ui.screens.CourseDetailsScreen
 import com.example.learnify.ui.components.BottomNavigation
 import com.example.learnify.ui.screens.*
 import com.example.learnify.viewmodel.UserViewModel
+import com.example.learnify.viewmodel.CourseViewModel
 import com.example.learnify.ui.theme.LearnifyTheme
 import com.google.firebase.auth.FirebaseAuth
 
@@ -24,10 +26,18 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             LearnifyTheme {
+
                 val navController = rememberNavController()
-                val viewModel: UserViewModel = viewModel()
+
+                // User ViewModel
+                val userViewModel: UserViewModel = viewModel()
+
+                // Course ViewModel
+                val courseViewModel: CourseViewModel = viewModel()
+
                 var selected by remember { mutableStateOf<String?>(null) }
 
                 // 🔹 راقب الشاشة الحالية
@@ -37,7 +47,7 @@ class MainActivity : ComponentActivity() {
                 // 🔹 تحقق من حالة تسجيل الدخول
                 val currentUser = FirebaseAuth.getInstance().currentUser
                 val showBottomBar = currentUser != null &&
-                        currentRoute !in listOf("login", "signup", "forgot")
+                        currentRoute !in listOf("login", "signup", "forgot", "details/{courseId}")
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -50,17 +60,23 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
+
                     NavHost(
                         navController = navController,
                         startDestination = if (currentUser == null) "login" else "home",
                         modifier = Modifier.padding(innerPadding)
                     ) {
-                        // 🔸 شاشات المصادقة
-                        composable("login") { LoginScreen(navController, viewModel) }
-                        composable("signup") { SignUpScreen(navController, viewModel) }
-                        composable("forgot") { ForgotPasswordScreen(navController, viewModel) }
 
+                        // ---------------------------
+                        // 🔸 شاشات المصادقة
+                        // ---------------------------
+                        composable("login") { LoginScreen(navController, userViewModel) }
+                        composable("signup") { SignUpScreen(navController, userViewModel) }
+                        composable("forgot") { ForgotPasswordScreen(navController, userViewModel) }
+
+                        // ---------------------------
                         // 🔸 شاشات التطبيق
+                        // ---------------------------
                         composable("home") {
                             HomeScreen(
                                 selected = selected,
@@ -70,7 +86,19 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("pomodoro") { PomodoroScreen() }
                         composable("todo") { ToDoScreen() }
-                        composable("you") { YouScreen(navController, viewModel) }
+                        composable("you") { YouScreen(navController, userViewModel , courseViewModel) }
+                        composable("edit_profile") { EditProfileScreen(navController, userViewModel) }
+
+                        // ---------------------------
+                        // 🔸 شاشة تفاصيل الكورس
+                        // ---------------------------
+                        composable("details/{courseId}") { backStackEntry ->
+                            val courseId = backStackEntry.arguments?.getString("courseId") ?: ""
+                            CourseDetailsScreen(
+                                courseId = courseId,
+                                viewModel = courseViewModel
+                            )
+                        }
                     }
                 }
             }
