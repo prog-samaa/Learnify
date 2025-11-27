@@ -2,7 +2,14 @@ package com.example.learnify.ui.components
 
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
@@ -29,12 +36,13 @@ import com.example.learnify.ui.theme.unActiveStar
 
 @Composable
 fun CourseCard(
-    cardWeight: Int ,
-    cardHeight : Int ,
-    course: Course
+    course: Course,
+    cardWeight: Int,
+    cardHeight: Int,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .width(cardWeight.dp)
             .height(cardHeight.dp)
             .padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
@@ -48,7 +56,7 @@ fun CourseCard(
             horizontalAlignment = Alignment.Start
         ) {
             SubcomposeAsyncImage(
-                model = course.details.imageUrl.thumbnail.url,
+                model = course.thumbnailUrl,
                 contentDescription = "Course Image",
                 modifier = Modifier
                     .fillMaxWidth()
@@ -73,13 +81,13 @@ fun CourseCard(
             ) {
 
                 Text(
-                    text = course.details.courseTitle,
+                    text = course.title,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1
                 )
                 Text(
-                    text = "By ${course.details.channelTitle}",
+                    text = "By ${course.channelTitle}",
                     fontSize = 8.sp,
                     color = Color.Gray,
                     maxLines = 1
@@ -87,7 +95,7 @@ fun CourseCard(
 
                 Row {
                     val rating = course.rating ?: 4f
-                    Log.d("CourseRating", "Course ${course.details.courseTitle} -> $rating")
+                    Log.d("CourseRating", "Course ${course.title} -> $rating")
 
                     repeat(5) { index ->
                         val tint =

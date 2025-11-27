@@ -4,11 +4,29 @@ import com.example.learnify.data.model.YouTubePlaylistResponse
 import com.example.learnify.data.network.RetrofitInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.example.learnify.data.CourseDao
+import com.example.learnify.data.model.CourseEntity
+import kotlinx.coroutines.flow.Flow
 
-class CourseRepository {
 
-    private val apiKey = "Your API Key"
+class CourseRepository(private val dao: CourseDao) {
 
+    private val apiKey = "Your Api Key"
+    fun getCourse(id: String): Flow<CourseEntity?> = dao.getCourse(id)
+
+    suspend fun insert(course: CourseEntity) = dao.insert(course)
+
+    suspend fun toggleLike(course: CourseEntity) {
+        dao.update(course.copy(isLiked = !course.isLiked))
+    }
+
+    suspend fun toggleWatchLater(course: CourseEntity) {
+        dao.update(course.copy(isWatchLater = !course.isWatchLater))
+    }
+
+    suspend fun toggleCheck(course: CourseEntity) {
+        dao.update(course.copy(isChecked = !course.isChecked))
+    }
     suspend fun searchCourses(query: String): YouTubePlaylistResponse {
         return withContext(Dispatchers.IO) {
             val playlists = RetrofitInstance.api.searchPlaylists(
@@ -21,7 +39,7 @@ class CourseRepository {
 
             playlists.copy(
                 items = playlists.items.map { playlist ->
-                    val rating = calculateRatingForPlaylist(playlist.playlistId.playlistId)
+                    val rating = calculateRatingForPlaylist(playlist.id.playlistId)
                     playlist.copy(rating = rating)
                 }
             )

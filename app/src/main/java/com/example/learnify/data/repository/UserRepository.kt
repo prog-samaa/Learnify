@@ -1,9 +1,10 @@
 package com.example.learnify.data.repository
 
 import com.example.learnify.data.model.User
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
 class UserRepository {
@@ -12,59 +13,76 @@ class UserRepository {
     private val users = FirebaseFirestore.getInstance().collection("users")
 
     suspend fun registerUser(name: String, email: String, phone: String, password: String): Boolean {
-        val result = auth.createUserWithEmailAndPassword(email, password).await()
-        val uid = result.user?.uid ?: return false
-        val user = User(uid = uid, name = name, email = email, phone = phone, imageUrl = "")
-        users.document(uid).set(user).await()
-        return true
-    }
-
-    suspend fun loginUser(email: String, password: String): Boolean {
-        auth.signInWithEmailAndPassword(email, password).await()
-        return auth.currentUser != null
-    }
-
-    fun resetPassword(email: String) = auth.sendPasswordResetEmail(email)
-
-    fun getCurrentUser() = auth.currentUser
-
-
-    suspend fun getUserData(userId: String): Map<String, Any>? {
-        val snap = users.document(userId).get().await()
-        return if (snap.exists()) snap.data else null
-    }
-
-    suspend fun updateUserFields(userId: String, updates: Map<String, Any?>) {
-        users.document(userId).update(updates).await()
-    }
-
-    suspend fun addToWatchlist(userId: String, courseId: String) {
-        users.document(userId).update("watchlist", FieldValue.arrayUnion(courseId)).await()
-    }
-
-    suspend fun addToFavorites(userId: String, courseId: String) {
-        users.document(userId).update("favorites", FieldValue.arrayUnion(courseId)).await()
-    }
-
-    suspend fun removeFromWatchlist(userId: String, courseId: String) {
-        users.document(userId).update("watchlist", FieldValue.arrayRemove(courseId)).await()
-    }
-
-    suspend fun removeFromFavorites(userId: String, courseId: String) {
-        users.document(userId).update("favorites", FieldValue.arrayRemove(courseId)).await()
-    }
-
-    fun listenToUserRealtime(userId: String, onChange: (Map<String, Any>?) -> Unit) {
-        users.document(userId).addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                onChange(null)
-                return@addSnapshotListener
-            }
-            onChange(snapshot?.data)
+        return try {
+            val result = auth.createUserWithEmailAndPassword(email, password).await()
+            val uid = result.user?.uid ?: return false
+            val user = User(uid, name, email, phone, "")
+            users.document(uid).set(user).await()
+            true
+        } catch (_: Exception) {
+            false
         }
     }
 
-    fun logout() {
-        auth.signOut()
+    suspend fun loginUser(email: String, password: String): Boolean {
+        return try {
+            auth.signInWithEmailAndPassword(email, password).await()
+            auth.currentUser != null
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    fun resetPassword(email: String) = auth.sendPasswordResetEmail(email)
+    fun getCurrentUser() = auth.currentUser
+    fun logout() = auth.signOut()
+
+    suspend fun getUserData(userId: String): Map<String, Any>? {
+        val snap = users.document(userId).get().await()
+        return snap.data
+    }
+
+    suspend fun updateUserInfo(name: String, phone: String) {
+        val uid = auth.currentUser?.uid ?: return
+        users.document(uid).update(mapOf("name" to name, "phone" to phone)).await()
+    }
+
+    suspend fun updateUserPassword(newPassword: String) {
+        auth.currentUser?.updatePassword(newPassword)?.await()
+    }
+
+    suspend fun verifyPassword(currentPassword: String): Boolean {
+        val user = auth.currentUser ?: return false
+        val email = user.email ?: return false
+        val credential = EmailAuthProvider.getCredential(email, currentPassword)
+        return try {
+            user.reauthenticate(credential).await()
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+
+    suspend fun addToWatchlist(userId: String, courseId: String) =
+        users.document(userId).update("watchlist", FieldValue.arrayUnion(courseId)).await()
+
+    suspend fun addToFavorites(userId: String, courseId: String) =
+        users.document(userId).update("favorites", FieldValue.arrayUnion(courseId)).await()
+
+    suspend fun removeFromWatchlist(userId: String, courseId: String) =
+        users.document(userId).update("watchlist", FieldValue.arrayRemove(courseId)).await()
+
+    suspend fun removeFromFavorites(userId: String, courseId: String) =
+        users.document(userId).update("favorites", FieldValue.arrayRemove(courseId)).await()
+
+
+    fun listenToUserRealtime(userId: String, onChange: (Map<String, Any>?) -> Unit) {
+        users.document(userId).addSnapshotListener { snap, error ->
+            if (error != null) onChange(null)
+            else onChange(snap?.data)
+        }
     }
 }
+
+

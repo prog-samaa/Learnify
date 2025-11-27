@@ -14,39 +14,13 @@ class UserViewModel : ViewModel() {
     val isSuccess = mutableStateOf(false)
     val isLoggedIn = mutableStateOf(false)
     val errorMessage = mutableStateOf<String?>(null)
-
     val currentUser = mutableStateOf<User?>(null)
 
-    init {
-        observeCurrentUser()
-    }
-
-    fun register(name: String, email: String, phone: String, password: String) {
-        viewModelScope.launch {
-            try {
-                val success = repo.registerUser(name, email, phone, password)
-                isSuccess.value = success
-                if (success) isLoggedIn.value = true
-            } catch (e: Exception) {
-                errorMessage.value = e.message
-            }
-        }
-    }
-
-    fun login(email: String, password: String) {
-        viewModelScope.launch {
-            try {
-                val success = repo.loginUser(email, password)
-                isLoggedIn.value = success
-                if (success) observeCurrentUser()
-            } catch (e: Exception) {
-                errorMessage.value = e.message
-            }
-        }
-    }
+    init { observeCurrentUser() }
 
     private fun observeCurrentUser() {
-        val uid = repo.getCurrentUser()?.uid ?: return
+        val firebaseUser = repo.getCurrentUser() ?: return
+        val uid = firebaseUser.uid
 
         repo.listenToUserRealtime(uid) { data ->
             if (data != null) {
@@ -59,27 +33,106 @@ class UserViewModel : ViewModel() {
                     watchlist = data["watchlist"] as? List<String> ?: emptyList(),
                     favorites = data["favorites"] as? List<String> ?: emptyList()
                 )
+                isLoggedIn.value = true
             }
         }
     }
 
-    fun resetPassword(email: String) {
-        repo.resetPassword(email)
-    }
-
-    fun updateUser(name: String, phone: String) {
-        val uid = repo.getCurrentUser()?.uid ?: return
-        val updates = mapOf(
-            "name" to name,
-            "phone" to phone
-        )
-
+    fun register(name: String, email: String, phone: String, password: String) {
         viewModelScope.launch {
             try {
-                repo.updateUserFields(uid, updates)
-            } catch (e: Exception) {
-                errorMessage.value = e.message
-            }
+                val success = repo.registerUser(name, email, phone, password)
+                isSuccess.value = success
+                if (success) isLoggedIn.value = true
+            } catch (e: Exception) { errorMessage.value = e.message }
+        }
+    }
+
+    fun login(email: String, password: String) {
+        viewModelScope.launch {
+            try {
+                val success = repo.loginUser(email, password)
+                isLoggedIn.value = success
+                if (success) observeCurrentUser()
+            } catch (e: Exception) { errorMessage.value = e.message }
+        }
+    }
+
+    fun resetPassword(email: String) { repo.resetPassword(email) }
+
+    // دالة جديدة للتحقق من صحة الباسوورد الحالي
+    suspend fun verifyCurrentPassword(currentPassword: String): Boolean {
+        return try {
+            repo.verifyPassword(currentPassword)
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    //  التحقق من شروط الباسوورد الجديد
+    fun validateNewPassword(password: String): ValidationResult {
+        return when {
+            password.length < 6 -> ValidationResult(
+                isValid = false,
+                message = "Password must be at least 6 characters long"
+            )
+            !password.any { it.isDigit() } -> ValidationResult(
+                isValid = false,
+                message = "Password must contain at least one number"
+            )
+            !password.any { it.isLetter() } -> ValidationResult(
+                isValid = false,
+                message = "Password must contain at least one letter"
+            )
+            !password.any { !it.isLetterOrDigit() } -> ValidationResult(
+                isValid = false,
+                message = "Password must contain at least one special character"
+            )
+            else -> ValidationResult(isValid = true, message = "Password is valid")
+        }
+    }
+
+    fun changePassword(currentPassword: String, newPassword: String) {
+        viewModelScope.launch {
+            try {
+                val ok = repo.verifyPassword(currentPassword)
+                if (!ok) {
+                    errorMessage.value = "Wrong current password"
+                    return@launch
+                }
+                repo.updateUserPassword(newPassword)
+            } catch (e: Exception) { errorMessage.value = e.message }
+        }
+    }
+
+    fun updateNameAndPhone(name: String, phone: String) {
+        viewModelScope.launch {
+            try { repo.updateUserInfo(name, phone) }
+            catch (e: Exception) { errorMessage.value = e.message }
+        }
+    }
+
+
+    fun updateProfile(
+        name: String,
+        phone: String,
+        currentPassword: String? = null,
+        newPassword: String? = null,
+        onDone: () -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                // تحديث الاسم و الهاتف
+                updateNameAndPhone(name, phone)
+
+                // تحديث الباسورد
+                if (!newPassword.isNullOrEmpty() && !currentPassword.isNullOrEmpty()) {
+                    changePassword(currentPassword, newPassword)
+                }
+
+                // بعد كل التحديثات
+                onDone()
+            } catch (e: Exception) { errorMessage.value = e.message }
         }
     }
 
@@ -89,3 +142,9 @@ class UserViewModel : ViewModel() {
         currentUser.value = null
     }
 }
+
+// data class لنتيجة التحقق من الباسوورد
+data class ValidationResult(
+    val isValid: Boolean,
+    val message: String
+)
