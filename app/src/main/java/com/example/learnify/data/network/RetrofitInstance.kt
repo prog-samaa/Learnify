@@ -1,6 +1,5 @@
 package com.example.learnify.data.network
 
-import com.example.learnify.data.network.ApiService
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import retrofit2.Retrofit
@@ -11,17 +10,13 @@ object RetrofitInstance {
 
 
     private val moshi: Moshi by lazy {
-        Moshi.Builder()
-            .add(KotlinJsonAdapterFactory())
-            .build()
+        Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
     }
 
 
     val api: ApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(MoshiConverterFactory.create(moshi))
-            .build()
+        Retrofit.Builder().baseUrl(BASE_URL)
+            .addConverterFactory(MoshiConverterFactory.create(moshi)).build()
             .create(ApiService::class.java)
     }
 }

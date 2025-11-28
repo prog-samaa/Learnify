@@ -42,6 +42,7 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             onHomeClicked = { selected = null }
                         )
+
                     }
                 )  { innerPadding ->
                     NavHost(

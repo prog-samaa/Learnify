@@ -1,7 +1,9 @@
 package com.example.learnify.ui.components
 
 import android.util.Log
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -11,40 +13,57 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
-import com.example.learnify.data.model.Course
-import com.example.learnify.ui.theme.ActiveStar
-import com.example.learnify.ui.theme.unActiveStar
+import com.example.learnify.data.local.CourseEntity
 
 @Composable
-fun TrendingCourseCard(course: Course) {
+fun TrendingCourseCard(course: CourseEntity) {
+    var pressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(if (pressed) 0.95f else 1f)
     Card(
         modifier = Modifier
-            .width(270.dp)
-            .height(200.dp)
-            .padding(start = 8.dp, end = 8.dp),
+            .width(320.dp)
+            .height(190.dp)
+            .padding(horizontal = 8.dp)
+            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        pressed = true
+                        tryAwaitRelease()
+                        pressed = false
+                    }
+                )
+            },
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-    ) {
+    ){
         Box(modifier = Modifier.fillMaxSize()) {
             SubcomposeAsyncImage(
-                model = course.details.imageUrl.thumbnail.url,
+                model = course.imageUrl,
                 contentDescription = "Course Image",
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(20.dp))
-                    .blur(4.dp),
+                    .blur(1.dp),
                 contentScale = ContentScale.Crop
             ) {
                 SubcomposeAsyncImageContent(
@@ -53,8 +72,7 @@ fun TrendingCourseCard(course: Course) {
                         .graphicsLayer {
                             scaleY = 1.35f
                             translationY = -6f
-                        }
-                )
+                        })
             }
 
             Box(
@@ -62,13 +80,17 @@ fun TrendingCourseCard(course: Course) {
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            listOf(
+                            colors = listOf(
                                 Color.Transparent,
+                                Color(0x335CA6FF),
                                 Color.Black.copy(alpha = 0.4f)
-                            )
+                            ),
+                            startY = 0f,
+                            endY = Float.POSITIVE_INFINITY
                         )
                     )
             )
+
 
             Column(
                 modifier = Modifier
@@ -76,14 +98,22 @@ fun TrendingCourseCard(course: Course) {
                     .padding(10.dp)
             ) {
                 Text(
-                    text = course.details.courseTitle,
+                    text = course.title,
                     fontSize = 12.sp,
                     color = Color.White,
-                    maxLines = 1
+                    maxLines = 1,
+                    style = androidx.compose.ui.text.TextStyle(
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            offset = Offset(2f, 2f),
+                            blurRadius = 4f
+                        )
+                    )
                 )
 
+
                 Text(
-                    text = "By ${course.details.channelTitle}",
+                    text = "By ${course.channelTitle}",
                     fontSize = 10.sp,
                     color = Color.LightGray,
                     maxLines = 1
@@ -91,21 +121,21 @@ fun TrendingCourseCard(course: Course) {
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Row {
-                    val rating = course.rating ?: 4f
-                    Log.d("CourseRating", "Course ${course.details.courseTitle} -> $rating")
-
-                    repeat(5) { index ->
-                        val tint =
-                            if (index < rating.toInt()) ActiveStar else unActiveStar
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = null,
-                            tint = tint,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
-                }
+//                Row {
+//                    val rating = course.rating ?: 4f
+//                    Log.d("CourseRating", "Course ${course.details.courseTitle} -> $rating")
+//
+//                    repeat(5) { index ->
+//                        val tint =
+//                            if (index < rating.toInt()) ActiveStar else unActiveStar
+//                        Icon(
+//                            imageVector = Icons.Default.Star,
+//                            contentDescription = null,
+//                            tint = tint,
+//                            modifier = Modifier.size(14.dp)
+//                        )
+//                    }
+//                }
             }
         }
     }

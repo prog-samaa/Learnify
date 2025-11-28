@@ -1,14 +1,10 @@
 package com.example.learnify.ui.components
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,16 +18,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
-import com.example.learnify.data.model.Course
-import com.example.learnify.ui.theme.ActiveStar
+import com.example.learnify.data.local.CourseEntity
 import com.example.learnify.ui.theme.AppBackgroundColor
-import com.example.learnify.ui.theme.unActiveStar
 
 @Composable
 fun CourseCard(
-    cardWeight: Int ,
-    cardHeight : Int ,
-    course: Course
+    cardWeight: Int, cardHeight: Int, course: CourseEntity
 ) {
     Card(
         modifier = Modifier
@@ -48,7 +40,7 @@ fun CourseCard(
             horizontalAlignment = Alignment.Start
         ) {
             SubcomposeAsyncImage(
-                model = course.details.imageUrl.thumbnail.url,
+                model = course.imageUrl,
                 contentDescription = "Course Image",
                 modifier = Modifier
                     .fillMaxWidth()
@@ -62,8 +54,7 @@ fun CourseCard(
                         .graphicsLayer {
                             scaleY = 1.39f
                             translationY = -6f
-                        }
-                )
+                        })
             }
 
             Column(
@@ -73,33 +64,33 @@ fun CourseCard(
             ) {
 
                 Text(
-                    text = course.details.courseTitle,
+                    text = course.title,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1
                 )
                 Text(
-                    text = "By ${course.details.channelTitle}",
+                    text = "By ${course.channelTitle}",
                     fontSize = 8.sp,
                     color = Color.Gray,
                     maxLines = 1
                 )
 
-                Row {
-                    val rating = course.rating ?: 4f
-                    Log.d("CourseRating", "Course ${course.details.courseTitle} -> $rating")
-
-                    repeat(5) { index ->
-                        val tint =
-                            if (index < rating.toInt()) ActiveStar else unActiveStar
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = null,
-                            tint = tint,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
+//                Row {
+//                    val rating = course.rating ?: 4f
+//                    Log.d("CourseRating", "Course ${course.title} -> $rating")
+//
+//                    repeat(5) { index ->
+//                        val tint =
+//                            if (index < rating.toInt()) ActiveStar else unActiveStar
+//                        Icon(
+//                            imageVector = Icons.Default.Star,
+//                            contentDescription = null,
+//                            tint = tint,
+//                            modifier = Modifier.size(16.dp)
+//                        )
+//                    }
+//                }
             }
         }
     }

@@ -1,57 +1,191 @@
 package com.example.learnify.ui
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import android.app.Application
+import androidx.lifecycle.*
+import com.example.learnify.data.local.CourseDatabase
+import com.example.learnify.data.local.CourseEntity
 import com.example.learnify.data.repository.CourseRepository
-import com.example.learnify.data.model.Course
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.example.learnify.data.repository.toEntity
 import kotlinx.coroutines.launch
 
-class CourseViewModel(
-    private val repository: CourseRepository = CourseRepository()
-) : ViewModel() {
+class CourseViewModel(application: Application) : AndroidViewModel(application) {
+    private val dao = CourseDatabase.getDatabase(application).courseDao()
+    private val repository = CourseRepository(dao)
+    fun trendingCourses(category: String): LiveData<List<CourseEntity>> {
+        return repository.getTrendingLive(category)
+    }
+    private val generalMap = mutableMapOf<String, MutableLiveData<List<CourseEntity>>>()
 
-    private val _courses = MutableStateFlow<List<Course>>(emptyList())
-    val courses: StateFlow<List<Course>> = _courses
+    fun generalCoursesByCategory(category: String): LiveData<List<CourseEntity>> {
+        return generalMap.getOrPut(category) { MutableLiveData(emptyList()) }
+    }
+    private val _searchResults = MutableLiveData<List<CourseEntity>>()
+    val searchResults: LiveData<List<CourseEntity>> = _searchResults
+
+//    private val _isLoading = MutableLiveData(false)
+//    val isLoading: LiveData<Boolean> = _isLoading
+
+    // Loading states
+    private val _isTrendingLoading = MutableLiveData(false)
+    val isTrendingLoading: LiveData<Boolean> = _isTrendingLoading
+
+    private val _isSearchLoading = MutableLiveData(false)
+    val isSearchLoading: LiveData<Boolean> = _isSearchLoading
+
+    private val _isGeneralLoading = MutableLiveData(false)
+    val isGeneralLoading: LiveData<Boolean> = _isGeneralLoading
+
+    // Error states
+    private val _trendingError = MutableLiveData<String?>(null)
+    val trendingError: LiveData<String?> = _trendingError
+
+    private val _searchError = MutableLiveData<String?>(null)
+    val searchError: LiveData<String?> = _searchError
+
+    private val _generalError = MutableLiveData<String?>(null)
+    val generalError: LiveData<String?> = _generalError
 
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    // caches
+    private val loadedSearchQueries = mutableSetOf<String>()
+    private val loadedCategories = mutableSetOf<String>()
+    private val loadedTrending = mutableSetOf<String>()
 
+    // detect category
+     fun detectCategoryKeyFromQuery(query: String): String {
+        val q = query.lowercase()
+        return when {
+            "program" in q -> "programming"
+            "engineer" in q -> "engineering"
+            "medical" in q || "medicine" in q -> "medical"
+            "marketing" in q -> "marketing"
+            "language" in q -> "language"
+            "human" in q || "development" in q -> "human_dev"
+            q == "courses" || q == "home" -> "home"
+            else -> q.replace("""\s+""".toRegex(), "_")
+        }
+    }
 
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error
+    fun searchCoursesDirect(query: String) {
+        viewModelScope.launch {
+            _isSearchLoading.value = true
+            try {
+                val result = repository.searchDirect(query)
+
+                _searchResults.value = result.map {
+                    it.toEntity(
+                        isTrending = false,
+                        category = "search"   // temporary
+                    )
+                }
+            } catch (e: Exception) {
+                _searchError.value = e.message
+            } finally {
+                _isSearchLoading.value = false
+            }
+        }
+    }
 
     fun searchCourses(query: String) {
+        val q = query.trim()
+        if (q.isEmpty()) return
+
+        val categoryKey = detectCategoryKeyFromQuery(q)
+
+        val liveData = generalMap.getOrPut(categoryKey) { MutableLiveData(emptyList()) }
+
+        if (loadedSearchQueries.contains(q)) {
+            viewModelScope.launch {
+                val list = dao.getCoursesListByCategory(categoryKey)
+                if (list.isNotEmpty()) liveData.postValue(list)
+            }
+            return
+        }
+
         viewModelScope.launch {
+            _isGeneralLoading.value = true
             try {
-                _isLoading.value = true
-                val response = repository.searchCourses(query)
-                _courses.value = response.items
-                _error.value = null
+                val saved = repository.searchAndSave(q, categoryKey)
+                liveData.value = saved
+
+                loadedSearchQueries.add(q)
+                loadedCategories.add(categoryKey)
+                _generalError.value = null
             } catch (e: Exception) {
-                _error.value = e.message ?: "Unexpected error"
+                _generalError.value = e.message
             } finally {
-                _isLoading.value = false
+                _isGeneralLoading.value = false
             }
         }
     }
 
-    fun getPlaylistsByChannel(channelId: String) {
+    fun getTrendingCourses(category: String) {
+        val id = category.trim()
+        if (id.isEmpty()) return
+
+        if (loadedTrending.contains(id)) return
+
         viewModelScope.launch {
+            _isTrendingLoading.value = true
             try {
-                _isLoading.value = true
-                val response = repository.getPlaylistsByChannel(channelId)
-                _courses.value = response.items
-                _error.value = null
+                val api = repository.getTrendingFromAPI(id)
+                if (api.isNotEmpty())
+                    repository.saveTrending(api, id)
+
+                loadedTrending.add(id)
+
+                _trendingError.value = null
             } catch (e: Exception) {
-                _error.value = e.message ?: "Unexpected error"
+                _trendingError.value = e.message
             } finally {
-                _isLoading.value = false
+                _isTrendingLoading.value = false
             }
         }
     }
 
+    fun refreshTrending(category: String) {
+        val id = category.trim()
+        if (id.isEmpty()) return
+        viewModelScope.launch {
+            _isTrendingLoading.value = true
+            try {
+                val api = repository.getTrendingFromAPI(id)
+                if (api.isNotEmpty()) repository.saveTrending(api, id)
+                _trendingError.value = null
+            } catch (e: Exception) {
+                _trendingError.value = e.message
+            } finally {
+                _isTrendingLoading.value = false
+            }
+        }
+    }
 
+    fun refreshSearch(query: String) {
+    val q = query.trim()
+    if (q.isEmpty()) return
+
+    val categoryKey = detectCategoryKeyFromQuery(q)
+    val liveData = generalMap.getOrPut(categoryKey) { MutableLiveData(emptyList()) }
+
+    viewModelScope.launch {
+        _isGeneralLoading.value = true
+        try {
+            val saved = repository.searchAndSave(q, categoryKey)
+            liveData.value = saved
+
+            loadedSearchQueries.add(q)
+            _generalError.value = null
+        } catch (e: Exception) {
+            _generalError.value = e.message
+        } finally {
+            _isGeneralLoading.value = false
+        }
+    }
+}
+
+    fun clearLoadedCaches() {
+        loadedSearchQueries.clear()
+        loadedCategories.clear()
+        loadedTrending.clear()
+    }
 }

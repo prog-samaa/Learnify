@@ -6,13 +6,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.learnify.R
 import com.example.learnify.ui.components.CategoryButton
 import com.example.learnify.ui.components.CourseRowScreen
@@ -22,16 +25,16 @@ import com.example.learnify.ui.theme.PrimaryColor
 
 @Composable
 fun HomeScreen(
-    selected: String?,
-    onSelect: (String) -> Unit,
-    onHomeClicked: () -> Unit
+    selected: String?, onSelect: (String) -> Unit, onHomeClicked: () -> Unit
 ) {
-    val TrendingProgrammingChannelId = "UC8butISFwT-Wl7EV0hUK0BQ"
-    val TrendingMedicalChannelId = "UCNI0qOojpkhsUtaQ4_2NUhQ"
-    val TrendingEngineeringChannelId = "UClqhvGmHcvWL9w3R48t9QXQ"
-    val TrendingMarketingChannelId = "UCaAx1xeTgF3rs4rBPDq6-Kw"
-    val TrendingLanguageChannelId = "UCu8Lth4FT5HxaP0nypE-gTQ"
-    val TrendingHumanDevelopmentChannelId = "UCtYzVCmNxrshH4_bPO_-Y-A"
+    val programmingTrendingChannelId = "UC8butISFwT-Wl7EV0hUK0BQ"
+    val medicalTrendingChannelId = "UCNI0qOojpkhsUtaQ4_2NUhQ"
+    val engineeringTrendingChannelId = "UClqhvGmHcvWL9w3R48t9QXQ"
+    val marketingTrendingChannelId = "UCaAx1xeTgF3rs4rBPDq6-Kw"
+    val languageTrendingChannelId = "UCu8Lth4FT5HxaP0nypE-gTQ"
+    val humanDevelopmentTrendingChannelId = "UCtYzVCmNxrshH4_bPO_-Y-A"
+
+    var searchQuery by remember { mutableStateOf("") } // Holds the current search query input
 
     Column(
         modifier = Modifier
@@ -42,7 +45,11 @@ fun HomeScreen(
     ) {
         if (selected == null) {
 
-            LearnifyHeader()
+            LearnifyHeader(
+                onSearch = { query ->
+                    searchQuery = query
+                })
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -63,16 +70,52 @@ fun HomeScreen(
                 )
             }
             CategoryButton(selected = selected, onSelect = onSelect)
-            CourseRowScreen(query = "Courses")
+
+            CourseRowScreen(
+                query = if (searchQuery.isBlank()) "Courses" else searchQuery,
+                isSearch = searchQuery.isNotBlank(),
+                isTrending = false
+            )
+
+
 
         } else {
             when (selected) {
-                "Programming" -> CategoryScreen("Programming Core","programming courses",TrendingProgrammingChannelId)
-                "Engineering" -> CategoryScreen("Engineering Core","Engineering courses",TrendingEngineeringChannelId)
-                "Medical" ->     CategoryScreen("Medical Core","medical courses",TrendingMedicalChannelId)
-                "Marketing" ->   CategoryScreen("Marketing Core","marketing courses",TrendingMarketingChannelId)
-                "Language" ->    CategoryScreen("Language Core","language courses",TrendingLanguageChannelId)
-                "Human Development" -> CategoryScreen("Human Development Core","Human Development Courses",TrendingHumanDevelopmentChannelId)
+                "Programming" -> CategoryScreen(
+                    CategoryName = "Programming Core",
+                    QueryGrid = "programming courses",
+                    TrendingChannelId = programmingTrendingChannelId
+                )
+
+                "Engineering" -> CategoryScreen(
+                    CategoryName = "Engineering Core",
+                    QueryGrid = "Engineering courses",
+                    TrendingChannelId = engineeringTrendingChannelId
+                )
+
+                "Medical" -> CategoryScreen(
+                    CategoryName = "Medical Core",
+                    QueryGrid = "medical courses",
+                    TrendingChannelId = medicalTrendingChannelId
+                )
+
+                "Marketing" -> CategoryScreen(
+                    CategoryName = "Marketing Core",
+                    QueryGrid = "marketing courses",
+                    TrendingChannelId = marketingTrendingChannelId
+                )
+
+                "Language" -> CategoryScreen(
+                    CategoryName = "Language Core",
+                    QueryGrid = "language courses",
+                    TrendingChannelId = languageTrendingChannelId
+                )
+
+                "Human Development" -> CategoryScreen(
+                    CategoryName = "Human Development Core",
+                    QueryGrid = "Human Development Courses",
+                    TrendingChannelId = humanDevelopmentTrendingChannelId
+                )
             }
         }
     }

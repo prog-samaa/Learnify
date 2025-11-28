@@ -5,40 +5,66 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.learnify.ui.CourseViewModel
+import androidx.compose.runtime.livedata.observeAsState
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CourseRowScreen(
     cardWeight: Int = 245,
-    cardHeight : Int = 300,
-    query: String,
+    cardHeight: Int = 300,
     viewModel: CourseViewModel = viewModel(),
-    isTrending: Boolean = false
+    query: String,
+    isTrending: Boolean = false,
+    isSearch :Boolean = false
 ) {
-    val courses by viewModel.courses.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val error by viewModel.error.collectAsState()
+    val categoryKey = viewModel.detectCategoryKeyFromQuery(query)
+
+    val courses by if (isTrending) {
+        viewModel.trendingCourses(query).observeAsState(emptyList())
+    } else if (isSearch) {
+        viewModel.searchResults.observeAsState(emptyList())
+    } else {
+        viewModel.generalCoursesByCategory(categoryKey).observeAsState(emptyList())
+    }
+
+    val isTrendingLoading by viewModel.isTrendingLoading.observeAsState(false)
+    val isSearchLoading by viewModel.isSearchLoading.observeAsState(false)
+    val isGeneralLoading by viewModel.isGeneralLoading.observeAsState(false)
+
+    val isLoading = when {
+        isTrending -> isTrendingLoading
+        isSearch -> isSearchLoading
+        else -> isGeneralLoading
+    }
+
+
+    val trendingError by viewModel.trendingError.observeAsState(null)
+    val searchError by viewModel.searchError.observeAsState(null)
+    val generalError by viewModel.generalError.observeAsState(null)
+
+    val error = when {
+        isTrending -> trendingError
+        isSearch -> searchError
+        else -> generalError
+    }
 
     LaunchedEffect(query, isTrending) {
-        if (isTrending) {
-            viewModel.getPlaylistsByChannel(query)
-        } else {
-            viewModel.searchCourses(query)
+        when {
+            isTrending -> viewModel.getTrendingCourses(query)
+            isSearch -> viewModel.searchCoursesDirect(query)
+            query.isNotBlank() -> viewModel.searchCourses(query)
         }
     }
 
     when {
         isLoading -> Loading()
-        error != null -> Loading()
-        courses.isEmpty() -> Text("No results found :(", modifier = Modifier.padding(16.dp))
+        error != null -> Text(text = error ?: "Unknown error", modifier = Modifier.padding(16.dp))
+        courses.isEmpty() -> Text(text = error ?: "No Courses Found", modifier = Modifier.padding(16.dp))
         else -> LazyRow(modifier = Modifier.padding(8.dp)) {
             items(courses) { course ->
                 if (isTrending) TrendingCourseCard(course)

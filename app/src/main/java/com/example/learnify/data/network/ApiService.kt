@@ -1,8 +1,9 @@
 package com.example.learnify.data.network
 
+import com.example.learnify.data.model.ChannelPlaylistResponseModel
 import com.example.learnify.data.model.PlaylistItemsResponse
+import com.example.learnify.data.model.SearchPlaylistResponseModel
 import com.example.learnify.data.model.VideoStatsResponse
-import com.example.learnify.data.model.YouTubePlaylistResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -15,7 +16,7 @@ interface ApiService {
         @Query("type") type: String = "playlist",
         @Query("maxResults") maxResults: Int = 50,
         @Query("key") apiKey: String
-    ): YouTubePlaylistResponse
+    ): SearchPlaylistResponseModel
 
     @GET("playlists")
     suspend fun getChannelPlaylists(
@@ -23,7 +24,7 @@ interface ApiService {
         @Query("channelId") channelId: String,
         @Query("maxResults") maxResults: Int = 50,
         @Query("key") apiKey: String
-    ): YouTubePlaylistResponse
+    ): ChannelPlaylistResponseModel
 
     @GET("playlistItems")
     suspend fun getPlaylistItems(

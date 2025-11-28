@@ -21,9 +21,7 @@ import com.example.learnify.ui.theme.PrimaryColor
 @Composable
 fun Loading() {
     Box(
-        modifier = Modifier
-            .fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
